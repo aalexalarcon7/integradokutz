@@ -223,8 +223,8 @@ def mostrar_splash(root):
     splash.geometry(f"{screen_width}x{screen_height}+0+0")
     splash.configure(bg="white")
 
-    img = Image.open("77b5c28b-7512-4be4-a02e-590cff85e33a.png")
-    img = img.resize((200, 200), Image.Resampling.LANCZOS)
+    img = Image.open("logo.png")
+    img = img.resize((500, 500), Image.Resampling.LANCZOS)
     logo = ImageTk.PhotoImage(img)
     splash.logo = logo  # 👈 evita que se elimine la imagen
 
