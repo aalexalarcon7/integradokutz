@@ -12,7 +12,7 @@ class BackupApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Gestor de Backups de Red")
-        self.root.state('zoomed')  # Abrir en pantalla completa
+        self.root.state('zoomed')
 
         self.dao = DispositivoDAO()
         self.backup_manager = BackupManager()
@@ -22,36 +22,17 @@ class BackupApp:
         self.cargar_dispositivos()
 
     def setup_ui(self):
-        estilo = tb.Style("flatly")
+        estilo = tb.Style("minty")
+
+        estilo.configure("info.TLabelframe.Label", font=("Segoe UI", 14, "bold"))
+        estilo.configure("primary.TLabelframe.Label", font=("Segoe UI", 14, "bold"))
 
         main_frame = ttk.Frame(self.root, padding=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        list_frame = ttk.LabelFrame(main_frame, text="Dispositivos Registrados", padding=10, style="info.TLabelframe")
-        list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        self.tree = ttk.Treeview(list_frame, columns=('Nombre', 'IP', 'Puerto', 'Tipo', 'Frecuencia'), show='headings', height=15)
-        for col, anchor in [('Nombre', 'w'), ('IP', 'center'), ('Puerto', 'center'), ('Tipo', 'center'), ('Frecuencia', 'center')]:
-            self.tree.heading(col, text=col)
-            self.tree.column(col, anchor=anchor, width=100)
-        self.tree.pack(fill=tk.BOTH, expand=True)
-
-        btn_frame = ttk.Frame(list_frame)
-        btn_frame.pack(fill=tk.X, pady=5)
-
-        action_buttons = [
-            ("✏️ Editar", self.editar_dispositivo),
-            ("🗑️ Eliminar", self.eliminar_dispositivo),
-            ("💾 Backup", self.realizar_backup_seleccionado),
-            ("🔍 Probar SSH", self.probar_conexion_ssh)
-        ]
-
-        for text, cmd in action_buttons:
-            btn = ttk.Button(btn_frame, text=text, command=cmd, width=14, style="success.TButton")
-            btn.pack(side=tk.LEFT, padx=5, pady=5)
-
+        # Cambio: Gestión a la izquierda, dispositivos a la derecha
         form_frame = ttk.LabelFrame(main_frame, text="Gestión de Dispositivo", padding=10, style="info.TLabelframe")
-        form_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        form_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         campos = [
             ("Nombre", "nombre_entry"),
@@ -65,36 +46,63 @@ class BackupApp:
 
         self.campos = {}
         for idx, (label, name, *extra) in enumerate(campos):
-            ttk.Label(form_frame, text=label + ":").grid(row=idx, column=0, sticky=tk.W, pady=3, padx=5)
+            ttk.Label(form_frame, text=label + ":", font=("Segoe UI", 12)).grid(row=idx, column=0, sticky=tk.W, pady=5, padx=5)
             if name.endswith("combobox"):
-                cb = ttk.Combobox(form_frame, values=extra[0], state="readonly")
-                cb.grid(row=idx, column=1, sticky=tk.EW, pady=3, padx=5)
+                cb = ttk.Combobox(form_frame, values=extra[0], state="readonly", font=("Segoe UI", 12))
+                cb.grid(row=idx, column=1, sticky=tk.EW, pady=5, padx=5)
                 self.campos[name] = cb
             else:
                 show = "*" if "contraseña" in name else None
                 default = "22" if "puerto" in name else ""
-                entry = ttk.Entry(form_frame, show=show)
+                entry = ttk.Entry(form_frame, show=show, font=("Segoe UI", 12))
                 entry.insert(0, default)
-                entry.grid(row=idx, column=1, sticky=tk.EW, pady=3, padx=5)
+                entry.grid(row=idx, column=1, sticky=tk.EW, pady=5, padx=5)
                 self.campos[name] = entry
 
         form_frame.columnconfigure(1, weight=1)
 
+        separator = ttk.Separator(form_frame, orient='horizontal')
+        separator.grid(row=len(campos), column=0, columnspan=2, sticky="ew", pady=10)
+
         action_frame = ttk.Frame(form_frame)
         action_frame.grid(row=len(campos)+1, column=0, columnspan=2, pady=10)
-        ttk.Button(action_frame, text="💾 Guardar", command=self.guardar_dispositivo, width=12, style="primary.TButton").pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="✖ Cancelar", command=self.limpiar_formulario, width=12, style="danger.TButton").pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="💾 Guardar", command=self.guardar_dispositivo, width=16, style="primary.TButton", padding=6).pack(side=tk.LEFT, padx=6)
+        ttk.Button(action_frame, text="✖ Cancelar", command=self.limpiar_formulario, width=16, style="danger.Outline.TButton", padding=6).pack(side=tk.LEFT, padx=6)
+
+        list_frame = ttk.LabelFrame(main_frame, text="Dispositivos Registrados", padding=10, style="info.TLabelframe")
+        list_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.tree = ttk.Treeview(list_frame, columns=('Nombre', 'IP', 'Puerto', 'Tipo', 'Frecuencia'), show='headings', height=15)
+        for col, anchor in [('Nombre', 'w'), ('IP', 'center'), ('Puerto', 'center'), ('Tipo', 'center'), ('Frecuencia', 'center')]:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, anchor=anchor, width=120)
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+        btn_frame = ttk.Frame(list_frame)
+        btn_frame.pack(fill=tk.X, pady=5)
+
+        action_buttons = [
+            ("✏️ Editar", self.editar_dispositivo, "primary.Outline.TButton"),
+            ("🗑️ Eliminar", self.eliminar_dispositivo, "danger.Outline.TButton"),
+            ("💾 Backup", self.realizar_backup_seleccionado, "success.Outline.TButton"),
+            ("🔍 Probar SSH", self.probar_conexion_ssh, "info.Outline.TButton")
+        ]
+
+        for text, cmd, style in action_buttons:
+            btn = ttk.Button(btn_frame, text=text, command=cmd, width=16, style=style, padding=6)
+            btn.pack(side=tk.LEFT, padx=6, pady=8)
+            btn.bind("<Enter>", lambda e, b=btn: b.configure(cursor="hand2"))
 
         log_frame = ttk.LabelFrame(self.root, text="Registro de Actividades", padding=10, style="primary.TLabelframe")
         log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0,10))
 
-        self.log_text = tk.Text(log_frame, height=8, state=tk.DISABLED, wrap=tk.WORD, bg="#f8f9fa", font=("Consolas", 10))
+        self.log_text = tk.Text(log_frame, height=8, state=tk.DISABLED, wrap=tk.WORD, bg="#1e1e1e", fg="#d4d4d4", font=("Consolas", 11), insertbackground="white", relief=tk.SUNKEN, borderwidth=2)
         scrollbar = ttk.Scrollbar(log_frame, command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=scrollbar.set)
 
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.log_text.pack(fill=tk.BOTH, expand=True)
-
+        
     def cargar_dispositivos(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -226,7 +234,7 @@ def mostrar_splash(root):
     img = Image.open("logo.png")
     img = img.resize((500, 500), Image.Resampling.LANCZOS)
     logo = ImageTk.PhotoImage(img)
-    splash.logo = logo  # 👈 evita que se elimine la imagen
+    splash.logo = logo
 
     tk.Label(splash, image=logo, bg="white").place(relx=0.5, rely=0.35, anchor=tk.CENTER)
     tk.Label(splash, text="Cargando RedSafe...", font=("Segoe UI", 18, "bold"), bg="white").place(relx=0.5, rely=0.6, anchor=tk.CENTER)
@@ -237,15 +245,13 @@ def mostrar_splash(root):
 
     def cerrar_y_mostrar():
         splash.destroy()
-        app = BackupApp(root)  # ← Aquí recién creamos la app
+        app = BackupApp(root)
         root.deiconify()
 
-    # Esperar 2 segundos (2000 milisegundos)
     splash.after(2000, cerrar_y_mostrar)
 
-
 if __name__ == "__main__":
-    root = tb.Window(themename="flatly")
+    root = tb.Window(themename="minty")
     root.state('zoomed')
     root.withdraw()
     mostrar_splash(root)
