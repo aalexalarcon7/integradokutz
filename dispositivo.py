@@ -10,6 +10,7 @@ class Dispositivo:
     contraseña: str = ""
     tipo: str = ""
     frecuencia_backup: str = ""
+    puerto_ssh: int = 22  # Nuevo campo con valor por defecto 22
 
 class DispositivoDAO:
     def __init__(self, db_path='dispositivos.db'):
@@ -26,7 +27,8 @@ class DispositivoDAO:
                                 usuario TEXT NOT NULL,
                                 contraseña TEXT NOT NULL,
                                 tipo TEXT NOT NULL,
-                                frecuencia_backup TEXT NOT NULL
+                                frecuencia_backup TEXT NOT NULL,
+                                puerto_ssh INTEGER NOT NULL DEFAULT 22
                               )''')
             conn.commit()
     
@@ -34,10 +36,11 @@ class DispositivoDAO:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''INSERT INTO dispositivos 
-                              (nombre, ip, usuario, contraseña, tipo, frecuencia_backup)
-                              VALUES (?, ?, ?, ?, ?, ?)''',
+                              (nombre, ip, usuario, contraseña, tipo, frecuencia_backup, puerto_ssh)
+                              VALUES (?, ?, ?, ?, ?, ?, ?)''',
                            (dispositivo.nombre, dispositivo.ip, dispositivo.usuario,
-                            dispositivo.contraseña, dispositivo.tipo, dispositivo.frecuencia_backup))
+                            dispositivo.contraseña, dispositivo.tipo, 
+                            dispositivo.frecuencia_backup, dispositivo.puerto_ssh))
             dispositivo.id = cursor.lastrowid
             conn.commit()
     
@@ -50,11 +53,13 @@ class DispositivoDAO:
                                 usuario = ?,
                                 contraseña = ?,
                                 tipo = ?,
-                                frecuencia_backup = ?
+                                frecuencia_backup = ?,
+                                puerto_ssh = ?
                               WHERE id = ?''',
                            (dispositivo.nombre, dispositivo.ip, dispositivo.usuario,
                             dispositivo.contraseña, dispositivo.tipo,
-                            dispositivo.frecuencia_backup, dispositivo.id))
+                            dispositivo.frecuencia_backup, dispositivo.puerto_ssh,
+                            dispositivo.id))
             conn.commit()
     
     def eliminar(self, dispositivo_id):
@@ -77,7 +82,8 @@ class DispositivoDAO:
                     usuario=row[3],
                     contraseña=row[4],
                     tipo=row[5],
-                    frecuencia_backup=row[6]
+                    frecuencia_backup=row[6],
+                    puerto_ssh=row[7]  # Nuevo campo
                 )
             return None
     
@@ -96,6 +102,7 @@ class DispositivoDAO:
                     usuario=row[3],
                     contraseña=row[4],
                     tipo=row[5],
-                    frecuencia_backup=row[6]
+                    frecuencia_backup=row[6],
+                    puerto_ssh=row[7]  # Nuevo campo
                 ))
             return dispositivos
